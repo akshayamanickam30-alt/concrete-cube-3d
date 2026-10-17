@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hydrophobic Concrete Pavement Model</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+
+  .canvas-container {
+    touch-action: none;
+    position: relative;
+    cursor: grab;
+  }
+
+  .canvas-container:active {
+    cursor: grabbing;
+  }
+</style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between">
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-blue-500/20">
+          🔷
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-900 leading-tight">Hydrophobic Pavement</h1>
+          <p class="text-xs text-slate-500">3D Interactive Structural Model</p>
+        </div>
+      </div>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        3D Interactive
+      </span>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full space-y-6">
+    <!-- Title & Subtitle Section -->
+    <div class="space-y-2">
+      <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+        Hydrophobic Concrete Pavement Model
+      </h2>
+      <p class="text-slate-600 text-base md:text-lg max-w-3xl">
+        Interactive cross-section prototype featuring a 2.5% lateral crown cross-slope, integrated drainage gutters, and hydrophobic water-repellent surface layer.
+      </p>
+    </div>
+
+    <!-- Layer Selector Buttons -->
+    <div class="flex flex-wrap gap-2 pt-2">
+      <button class="layer-btn active flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 bg-blue-600 text-white shadow-md shadow-blue-500/20 hover:bg-blue-700" data-layer="all">
+        <span class="w-2.5 h-2.5 rounded-full bg-white"></span>
+        All Layers
+      </button>
+      <button class="layer-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-50" data-layer="concrete">
+        <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+        Hydrophobic Concrete
+      </button>
+      <button class="layer-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-50" data-layer="aggregate">
+        <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+        Sub-base Aggregate
+      </button>
+      <button class="layer-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-50" data-layer="subgrade">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-600"></span>
+        Compacted Subgrade
+      </button>
+      <button class="layer-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-50" data-layer="gutters">
+        <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+        Side Drainage Gutters
+      </button>
+    </div>
+
+    <!-- 3D Viewer Canvas -->
+    <div class="canvas-container w-full h-[450px] md:h-[520px] bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl relative">
+      <!-- Controls Overlay Hint -->
+      <div class="absolute top-4 right-4 z-10 bg-slate-800/80 backdrop-blur-md border border-slate-700/50 rounded-xl px-3.5 py-2 text-xs text-slate-300 flex items-center gap-2 pointer-events-none shadow-lg">
+        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+        </svg>
+        <span>Drag to rotate • Scroll to zoom</span>
+      </div>
+
+      <canvas id="scene" class="w-full h-full block"></canvas>
+    </div>
+
+    <!-- Details Card -->
+    <section class="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div>
+          <h3 id="cardTitle" class="text-2xl font-bold text-slate-900">🔵 Complete Pavement Assembly</h3>
+          <p class="text-slate-500 text-sm mt-1">Full multi-layer structural cross-section</p>
+        </div>
+        <div id="depthBadge" class="px-4 py-2 bg-blue-50 border border-blue-100 rounded-2xl text-blue-700 font-bold text-base md:text-lg shadow-sm">
+          325 mm Total Depth
+        </div>
+      </div>
+
+      <p id="layerDescription" class="text-slate-600 leading-relaxed text-base">
+        Integrated structural cross-section showing subgrade preparation, aggregate load distribution layer, hydrophobic concrete wearing course, and lateral drainage channels.
+      </p>
+
+      <!-- Specifications Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">Cross-Slope</span>
+          <strong class="text-slate-900 text-base font-semibold">2.5% Lateral Crown</strong>
+        </div>
+        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">Design Width</span>
+          <strong class="text-slate-900 text-base font-semibold">3.50 m Roadway</strong>
+        </div>
+        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">Primary Function</span>
+          <strong class="text-slate-900 text-base font-semibold">Support &amp; Drainage</strong>
+        </div>
+        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">Material Type</span>
+          <strong class="text-slate-900 text-base font-semibold">Multi-layer Composite</strong>
+        </div>
+      </div>
+
+      <!-- Specific Layer Detail Banner -->
+      <div id="layerDetail" class="p-4 bg-sky-50/70 border-l-4 border-sky-500 rounded-r-xl text-slate-700 text-sm leading-relaxed">
+        Select a layer above to isolate specific components and inspect their engineering roles.
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 mt-8">
+    <p>Hydrophobic Concrete Pavement — Conceptual 3D Model &copy; 2026</p>
+  </footer>
+
+  <!-- Three.js Visual Script -->
+  <script>
+    (() => {
+      const canvas = document.getElementById("scene");
+      const detail = document.getElementById("layerDetail");
+      const cardTitle = document.getElementById("cardTitle");
+      const layerDescription = document.getElementById("layerDescription");
+      const depthBadge = document.getElementById("depthBadge");
+
+      if (!window.THREE) {
+        detail.textContent = "Three.js library failed to load. Please check your internet connection and refresh.";
+        return;
+      }
+
+      // Initialize Scene & Camera
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color("#0f172a");
+
+      const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+      camera.position.set(6.5, 5.5, 8);
+      camera.lookAt(0, 0.2, 0);
+
+      // WebGL Renderer Setup
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true
+      });
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+      // Lights Setup
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 2.2);
+      dirLight.position.set(5, 10, 7);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      scene.add(dirLight);
+
+      // Pavement Base Container Group
+      const pavement = new THREE.Group();
+      scene.add(pavement);
+
+      const layerGroups = {};
+
+      ["concrete", "aggregate", "subgrade", "gutters"].forEach(name => {
+        layerGroups[name] = new THREE.Group();
+        pavement.add(layerGroups[name]);
+      });
+
+      // Material Helper
+      function createMaterial(color, roughness = 0.7, metalness = 0.1) {
+        return new THREE.MeshStandardMaterial({
+          color,
+          roughness,
+          metalness
+        });
+      }
+
+      // Block Helper Function
+      function addBlock(group, width, height, depth, color, x, y, z) {
+        const mesh = new THREE.Mesh(
+          new THREE.BoxGeometry(width, height, depth),
+          createMaterial(color)
+        );
+
+        mesh.position.set(x, y, z);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.userData.layer = group;
+        layerGroups[group].add(mesh);
+        return mesh;
+      }
+
+      // Build Structural Pavement Layers
+      // 1. Compacted Subgrade (Bottom)
+      addBlock("subgrade", 5.4, 0.45, 2.8, "#855848", 0, -0.40, 0);
+
+      // 2. Sub-base Aggregate (Middle)
+      addBlock("aggregate", 5.1, 0.30, 2.55, "#7c3aed", 0, -0.025, 0);
+
+      // 3. Hydrophobic Concrete Base Course
+      addBlock("concrete", 4.95, 0.15, 2.4, "#0284c7", 0, 0.20, 0);
+
+      // Hydrophobic Concrete Wearing Surface (Top Finish)
+      addBlock("concrete", 4.95, 0.025, 2.4, "#38bdf8", 0, 0.287, 0);
+
+      // 4. Side Drainage Gutters
+      [-1, 1].forEach(side => {
+        const x = side * 2.75;
+        addBlock("gutters", 0.15, 0.12, 3.0, "#0d9488", x, -0.05, 0);
+        addBlock("gutters", 0.15, 0.45, 3.0, "#14b8a6", x, 0.16, 0);
+
+        // Inner Gutter Profile Lip
+        addBlock("gutters", 0.08, 0.27, 2.9, "#2dd4bf", side * 2.61, 0.05, 0);
+      });
+
+      // Animated Floating Hydrophobic Water Droplets
+      const droplets = new THREE.Group();
+      pavement.add(droplets);
+
+      const dropMaterial = new THREE.MeshStandardMaterial({
+        color: "#e0f2fe",
+        roughness: 0.1,
+        metalness: 0.2,
+        transparent: true,
+        opacity: 0.95
+      });
+
+      for (let i = 0; i < 28; i++) {
+        const drop = new THREE.Mesh(
+          new THREE.SphereGeometry(0.038, 16, 16),
+          dropMaterial
+        );
+
+        drop.position.set(
+          (Math.random() - 0.5) * 4.2,
+          0.42 + Math.random() * 0.12,
+          (Math.random() - 0.5) * 1.9
+        );
+
+        drop.userData.baseY = drop.position.y;
+        droplets.add(drop);
+      }
+
+      // View Controls Variables
+      let isDragging = false;
+      let previousX = 0;
+      let previousY = 0;
+      let rotationX = -0.15;
+      let rotationY = 0.45;
+      let zoom = 1;
+
+      function updateView() {
+        pavement.rotation.x = rotationX;
+        pavement.rotation.y = rotationY;
+
+        camera.position.set(
+          6.5 * zoom,
+          5.5 * zoom,
+          8 * zoom
+        );
+
+        camera.lookAt(0, 0.05, 0);
+      }
+
+      // Mouse & Touch Dragging Events
+      canvas.addEventListener("pointerdown", event => {
+        isDragging = true;
+        previousX = event.clientX;
+        previousY = event.clientY;
+        canvas.setPointerCapture(event.pointerId);
+      });
+
+      canvas.addEventListener("pointermove", event => {
+        if (!isDragging) return;
+
+        rotationY += (event.clientX - previousX) * 0.008;
+        rotationX += (event.clientY - previousY) * 0.005;
+
+        rotationX = Math.max(-0.7, Math.min(0.7, rotationX));
+
+        previousX = event.clientX;
+        previousY = event.clientY;
+        updateView();
+      });
+
+      function stopDragging() {
+        isDragging = false;
+      }
+
+      canvas.addEventListener("pointerup", stopDragging);
+      canvas.addEventListener("pointercancel", stopDragging);
+
+      // Mouse Zoom Controls
+      canvas.addEventListener("wheel", event => {
+        event.preventDefault();
+        zoom *= event.deltaY > 0 ? 1.08 : 0.92;
+        zoom = Math.max(0.65, Math.min(1.7, zoom));
+        updateView();
+      }, { passive: false });
+
+      // Information Card Data
+      const layerData = {
+        all: {
+          title: "🔵 Complete Pavement Assembly",
+          depth: "325 mm Total Depth",
+          description: "Integrated structural cross-section showing subgrade preparation, aggregate load distribution layer, hydrophobic concrete wearing course, and lateral drainage channels.",
+          detail: "Select a layer above to isolate specific components and inspect their engineering roles."
+        },
+        concrete: {
+          title: "💧 Hydrophobic Concrete Wearing Course",
+          depth: "50 mm Surface Depth",
+          description: "Surface course treated with hydrophobic silane/siloxane sealants or admixtures to lower surface energy and produce high water contact angles.",
+          detail: "Repels water droplets efficiently, accelerating lateral runoff towards drainage channels and minimizing freeze-thaw cracking."
+        },
+        aggregate: {
+          title: "🪨 Sub-base Aggregate Layer",
+          depth: "125 mm Layer Depth",
+          description: "Crushed stone aggregate layer engineered to distribute heavy vehicular traffic loads evenly across the underlying subgrade.",
+          detail: "Provides continuous structural stiffness, prevents moisture capillary rise, and serves as a stable working platform during construction."
+        },
+        subgrade: {
+          title: "🏜️ Compacted Subgrade Foundation",
+          depth: "150 mm Prepared Depth",
+          description: "Mechanically compacted natural soil foundation engineered to serve as the supporting base for the entire pavement structure.",
+          detail: "Ensures uniform bearing capacity and long-term settlement prevention for heavy structural loads."
+        },
+        gutters: {
+          title: "🌊 Side Drainage Gutters",
+          depth: "Dual Side Gutters",
+          description: "Precast or cast-in-place concrete channels positioned along the edges to collect hydrophobic surface runoff.",
+          detail: "Conveys collected surface water towards stormwater treatment outlets, preventing ponding and hydroplaning risks."
+        }
+      };
+
+      // Layer Selection Logic
+      function selectLayer(name) {
+        document.querySelectorAll(".layer-btn").forEach(button => {
+          const isActive = button.dataset.layer === name;
+          if (isActive) {
+            button.className = "layer-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 bg-blue-600 text-white shadow-md shadow-blue-500/20";
+          } else {
+            button.className = "layer-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-50";
+          }
+        });
+
+        // Set Material Opacities based on active selection
+        Object.entries(layerGroups).forEach(([key, group]) => {
+          group.traverse(object => {
+            if (!object.isMesh) return;
+            const isTarget = name === "all" || key === name;
+            object.material.transparent = !isTarget;
+            object.material.opacity = isTarget ? 1.0 : 0.12;
+            object.material.needsUpdate = true;
+          });
+        });
+
+        // Show/Hide Droplets
+        droplets.visible = name === "all" || name === "concrete";
+
+        // Update Dynamic UI Content
+        const info = layerData[name];
+        cardTitle.textContent = info.title;
+        depthBadge.textContent = info.depth;
+        layerDescription.textContent = info.description;
+        detail.textContent = info.detail;
+      }
+
+      document.querySelectorAll(".layer-btn").forEach(button => {
+        button.addEventListener("click", () => {
+          selectLayer(button.dataset.layer);
+        });
+      });
+
+      // Window Resize Handler
+      function resize() {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+
+        if (!width || !height) return;
+
+        renderer.setSize(width, height, false);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+      }
+
+      window.addEventListener("resize", resize);
+
+      // Initial Update
+      updateView();
+      resize();
+
+      // Render Loop
+      function animate(time) {
+        requestAnimationFrame(animate);
+
+        // Animate floating droplets
+        droplets.children.forEach((drop, i) => {
+          drop.position.y = drop.userData.baseY + Math.sin(time * 0.002 + i) * 0.012;
+        });
+
+        renderer.render(scene, camera);
+      }
+
+      animate(0);
+    })();
+  </script>
+</body>
+</html>
